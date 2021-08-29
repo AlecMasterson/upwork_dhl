@@ -1,0 +1,3 @@
+node_modules/
+results/**.xlsx
+results/**.csv
