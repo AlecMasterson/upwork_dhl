@@ -60,14 +60,15 @@ export function export_workbook(book: Workbook, path: string, fileName: string):
 };
 
 // Function for returning a specific value from the give Row as the correct type.
+// An optional "type" param can be given to force the expected typel.
 // An error is thrown if any of the following is true:
 // - the column does not exist in the Row
 // - the column is not defined in the configuration JSON
 // - the expected type is not supported in the below switch statement
-export function get_value(row: Row, name: string): number | string {
+export function get_value(row: Row, name: string, type?: string): number | string {
     const cell: Cell = row.getCell(name);
 
-    switch (ColumnConfig[name].type) {
+    switch (type || ColumnConfig[name].type) {
         case "String":
             return (cell.value || "").toString();
         case "Number":

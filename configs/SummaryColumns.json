@@ -1,0 +1,15 @@
+[
+    {"name": "Account"},
+    {"name": "Invoice Type"},
+    {"name": "OLX Invoice Date"},
+    {"name": "OLX Invoice Due Date"},
+    {"name": "Invoice Amount"},
+    {"name": "Markup"},
+    {"name": "OLX Paid"},
+    {"name": "Grand Total"},
+    {"name": "Total Charge"},
+    {"name": "Invoice Sent"},
+    {"name": "Stripe Invoice Paid"},
+    {"name": "Margin"},
+    {"name": "Rounded Diff"}
+]
