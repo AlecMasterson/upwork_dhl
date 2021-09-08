@@ -51,15 +51,19 @@ function add_formulas(book: Workbook, accountName: string): void {
 
     const data_formula = (name: string): void => {
         const sheet: Worksheet = get_worksheet(book, name);
-        const cellLoc: string = `${sheet.getColumn("Grand Total").letter}2`;
-        const formula: string = `IF(${cellLoc}="","",${cellLoc}*${AccountMapping[accountName].markup})`;
-        sheet.fillFormula(get_range(sheet.getColumn("Total Charge")), formula);
+        if (sheet) {
+            const cellLoc: string = `${sheet.getColumn("Grand Total").letter}2`;
+            const formula: string = `IF(${cellLoc}="","",${cellLoc}*${AccountMapping[accountName].markup})`;
+            sheet.fillFormula(get_range(sheet.getColumn("Total Charge")), formula);
+        }
     };
 
     const destination_formula = (name: string): void => {
         const sheet: Worksheet = get_worksheet(book, name);
-        const formula: string = `${sheet.getColumn("Grand Total").letter}2`;
-        sheet.fillFormula(get_range(sheet.getColumn("Total Charge")), formula);
+        if (sheet) {
+            const formula: string = `${sheet.getColumn("Grand Total").letter}2`;
+            sheet.fillFormula(get_range(sheet.getColumn("Total Charge")), formula);
+        }
     };
 
     data_formula("Export Data");
@@ -86,7 +90,11 @@ function create_summary_worksheet(book: Workbook): void {
 
 function create_worksheet(book: Workbook, newBook: Workbook, sheetName: string, accountName: string, accountId: string): boolean {
     // Get the Worksheet from the input file that the output file will be based on.
+    // If the input file does not exist, return false.
     const sheet: Worksheet = get_worksheet(book, sheetName);
+    if (!sheet) {
+        return false;
+    }
 
     // Get the column names/headers found in this Worksheet, removing any duplicates.
     // These can be matched with the keys found in the ColumnConfig.json configuration file.

@@ -87,7 +87,7 @@ export function get_value(row: Row, name: string, type?: string): number | strin
 export function get_worksheet(book: Workbook, name: string): Worksheet {
     const sheet: Worksheet = book.getWorksheet(name);
 
-    sheet.columns.forEach((column: Partial<Column>): void => {
+    sheet?.columns && sheet.columns.forEach((column: Partial<Column>): void => {
         column.key = column.values[1].toString().trim();
     });
 
