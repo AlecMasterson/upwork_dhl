@@ -1,6 +1,6 @@
 import { Row, Workbook, Worksheet } from "exceljs";
 import AccountMapping from "./configs/AccountMapping";
-import SummaryColumns from "./configs/SummaryColumns.json";
+import SummaryCSV from "./configs/output_columns/SummaryCSV.json";
 import { get_value, get_worksheet } from "./util";
 import * as CsvWriter from "csv-writer";
 import Lodash from "lodash";
@@ -9,7 +9,7 @@ import Lodash from "lodash";
 // The columns for the CSV can be found in the SummaryColumns.json configuration file.
 export function create_summary_csv(book: Workbook, date: string): void {
     CsvWriter.createObjectCsvWriter({
-        header: SummaryColumns.map((column: {name: string}): string => column.name),
+        header: SummaryCSV.map((column: {name: string}): string => column.name),
         path: `results/${date}_summary.csv`
     }).writeRecords(get_rows(book));
 }

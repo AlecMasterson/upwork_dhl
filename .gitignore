@@ -1,3 +1,4 @@
 node_modules/
+data/**/~$*.xlsx
 results/**.xlsx
 results/**.csv

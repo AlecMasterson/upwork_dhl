@@ -86,7 +86,7 @@
     "Stripe Invoice Paid": {"type": "String"},
     "Tax Adjustment": {"type": "Number", "format": "Currency"},
     "Total Amount": {"type": "Number"},
-    "Total Charge": {"type": "Formula", "format": "Currency"},
+    "Total Charge": {"type": "Number", "format": "Currency"},
     "Total Extra Charges (XC)": {"type": "Number", "format": "Currency"},
     "Weight Charge": {"type": "Number", "format": "Currency"},
     "Weight Flag": {"type": "String"},
