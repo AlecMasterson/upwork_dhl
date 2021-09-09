@@ -1,11 +1,14 @@
 import ExcelJS, { Row, Workbook, Worksheet } from "exceljs";
+import * as CsvWriter from "csv-writer";
 import AccountMapping from "./configs/AccountMapping";
 import ColumnsExportData from "./configs/output_columns/ExportData.json";
 import ColumnsExportDest from "./configs/output_columns/ExportDestinationCharges.json";
 import ColumnsImportData from "./configs/output_columns/ImportData.json";
 import ColumnsImportDest from "./configs/output_columns/ImportDestinationCharges.json";
 import StyleConfig from "./configs/StyleConfig.json";
+import SummaryCSV from "./configs/output_columns/SummaryCSV.json";
 import { add_formatting, add_table, adjust_column_widths, export_workbook, get_value, get_worksheet } from "./util";
+import Lodash from "lodash";
 
 /* =================================================
 ====================================================
@@ -17,6 +20,12 @@ interface ColumnConfig {
     format?: string;
     name: string;
     type?: string;
+}
+
+interface Summary {
+    "Account": string;
+    "Invoice Type": string;
+    "Total Charge": number;
 }
 
 interface WorksheetConfig {
@@ -39,6 +48,8 @@ FUNCTIONS
 //   - Format the Worksheets in the new Workbook (excluding the Summary Worksheet).
 //   - Export the new Workbook to an output file.
 export function create_account_workbooks(book: Workbook, date: string): void {
+    const summary: {[accountName: string]: {[sheetName: string]: number}} = {};
+
     Object.keys(AccountMapping).forEach((accountName: string): void => {
         const newBook: Workbook = new ExcelJS.Workbook();
 
@@ -49,7 +60,10 @@ export function create_account_workbooks(book: Workbook, date: string): void {
             {accountId: AccountMapping[accountName].importId, columns: ColumnsImportDest, sheet: get_worksheet(book, "Import Destination Charges")}
         ]
         .filter((config: WorksheetConfig): boolean => config.sheet !== undefined)
-        .forEach((config: WorksheetConfig): void => create_worksheet(newBook, accountName, config));
+        .forEach((config: WorksheetConfig): void => {
+            const totalCharge: number = create_worksheet(newBook, accountName, config);
+            Lodash.set(summary, `${accountName}.${config.sheet.name}`, totalCharge);
+        });
 
         if (newBook.worksheets.length > 0) {
             create_summary_worksheet(newBook);
@@ -65,6 +79,20 @@ export function create_account_workbooks(book: Workbook, date: string): void {
             export_workbook(newBook, "results", `${accountName}_${date}_shipment_report`);
         }
     });
+
+    const rows: Summary[] = [];
+    Object.keys(summary).forEach((accountName: string): void => {
+        Object.keys(summary[accountName])
+            .filter((sheetName: string): boolean => summary[accountName][sheetName] !== 0)
+            .forEach((sheetName: string): void => {
+                rows.push({"Account": accountName, "Invoice Type": sheetName, "Total Charge": summary[accountName][sheetName]});
+            });
+    });
+
+    CsvWriter.createObjectCsvWriter({
+        header: SummaryCSV.map((column: {name: string}): string => column.name),
+        path: `results/${date}_summary.csv`
+    }).writeRecords(rows);
 }
 
 // Function to create the Worksheet that summarizes the other Worksheets.
@@ -83,9 +111,12 @@ function create_summary_worksheet(book: Workbook): void {
     get_worksheet(book, "Summary").getColumn(2).numFmt = StyleConfig["FORMATS"]["Currency"];
 }
 
-function create_worksheet(book: Workbook, accountName: string, config: WorksheetConfig): void {
+function create_worksheet(book: Workbook, accountName: string, config: WorksheetConfig): number {
     // Create the empty list of rows needed for the table. It will be populated below.
     const rows: (number | string)[][] = [];
+
+    // Track the sum of the "Total Charge" column for this table.
+    let totalTotalCharge: number = 0;
 
     // For each row in this Worksheet:
     // - only utilize rows where the "Billing Account" matches the current account ID
@@ -98,11 +129,13 @@ function create_worksheet(book: Workbook, accountName: string, config: Worksheet
                     case "Account Name":
                         return accountName;
                     case "Total Charge":
-                        if (config.sheet.name.includes("Destination")) {
-                            return get_value(row, "Grand Total") as number;
+                        let totalCharge: number = get_value(row, "Grand Total") as number;
+                        if (!config.sheet.name.includes("Destination")) {
+                            totalCharge *= AccountMapping[accountName].markup;
                         }
 
-                        return (get_value(row, "Grand Total") as number) * AccountMapping[accountName].markup;
+                        totalTotalCharge += totalCharge;
+                        return totalCharge;
                     default:
                         return get_value(row, column.name, column.type);
                 }
@@ -112,4 +145,7 @@ function create_worksheet(book: Workbook, accountName: string, config: Worksheet
 
     // If data exists, create the new Worksheet and insert the table of data associated with the current account ID.
     rows.length > 0 && add_table(book.addWorksheet(config.sheet.name), config.columns, rows);
+
+    // Return the sum of the "Total Charge" column.
+    return totalTotalCharge;
 }
