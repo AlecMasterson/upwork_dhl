@@ -1,7 +1,0 @@
-{
-    "FORMATS": {
-        "Currency": "$#,##0.00;[Red]-$#,##0.00",
-        "Number": "#,##0;[Red]-#,##0"
-    },
-    "MIN_COLUMN_LENGTH": 10
-}
